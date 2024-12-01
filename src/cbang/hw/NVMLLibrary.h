@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ComputeDevice.h"
+#include "GPUMeasurement.h"
 
 #include <cbang/os/DynamicLibrary.h>
 #include <cbang/util/Singleton.h>
@@ -24,5 +25,7 @@ namespace cb {
     typedef devices_t::const_iterator iterator;
     iterator begin() const {return devices.begin();}
     iterator end() const {return devices.end();}
+
+    bool tryGetMeasurements(const char* uuid, GPUMeasurement &measurements);
   };
 }
