@@ -130,3 +130,43 @@ const ComputeDevice &NVMLLibrary::getDevice(unsigned i) const {
   if (getDeviceCount() <= i) THROW("Invalid NVML device index " << i);
   return devices.at(i);
 }
+
+bool NVMLLibrary::tryGetMeasurements(const char* uuid, GPUMeasurement &measurements) {
+  nvmlReturn_t err;
+  nvmlDevice_t device;
+  unsigned int value = 0;
+  nvmlPstates_t pstate;
+
+  try {
+    DYNAMIC_CALL(nvmlDeviceGetHandleByUUID, (uuid, &device));
+
+    DYNAMIC_CALL(nvmlDeviceGetClock, (device, NVML_CLOCK_GRAPHICS, NVML_CLOCK_ID_CURRENT, &value));
+    measurements.gpuFreq_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxClockInfo, (device, NVML_CLOCK_GRAPHICS, &value));
+    measurements.gpuFreqLimit_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetClock, (device, NVML_CLOCK_MEM, NVML_CLOCK_ID_CURRENT, &value));
+    measurements.memFreq_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxClockInfo, (device, NVML_CLOCK_MEM, &value));
+    measurements.memFreqLimit_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetTemperature, (device, NVML_TEMPERATURE_GPU, &value));
+    measurements.gpuTemp_C = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetPerformanceState, (device, &pstate));
+    measurements.pstate = (uint8_t)pstate;
+    DYNAMIC_CALL(nvmlDeviceGetCurrPcieLinkGeneration, (device, &value));
+    measurements.currPCIeLinkGen = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxPcieLinkGeneration, (device, &value));
+    measurements.maxPCIeLinkGen = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetGpuMaxPcieLinkGeneration, (device, &value));
+    measurements.maxPCIeLinkGenDevice = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetCurrPcieLinkWidth, (device, &value));
+    measurements.currPCIeLinkWidth = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxPcieLinkWidth, (device, &value));
+    measurements.maxPCIeLinkWidth = (uint8_t)value;
+
+    // We got everything 
+    return true;
+  } CATCH_ERROR;
+
+  // Something failed, struct contents are indeterminant
+  return false;
+}
