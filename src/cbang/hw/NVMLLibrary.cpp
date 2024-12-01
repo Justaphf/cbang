@@ -97,6 +97,74 @@ namespace {
   } nvmlReturn_t;
 
   /**
+   * Clock Ids.  These are used in combination with nvmlClockType_t
+   * to specify a single clock value.
+   */
+  typedef enum nvmlClockId_enum
+  {
+    NVML_CLOCK_ID_CURRENT            = 0,   //!< Current actual clock value
+    NVML_CLOCK_ID_APP_CLOCK_TARGET   = 1,   //!< Target application clock.
+                                            //!< Deprecated, do not use.
+    NVML_CLOCK_ID_APP_CLOCK_DEFAULT  = 2,   //!< Default application clock target
+                                            //!< Deprecated, do not use.
+    NVML_CLOCK_ID_CUSTOMER_BOOST_MAX = 3,   //!< OEM-defined maximum clock rate
+
+    //Keep this last
+    NVML_CLOCK_ID_COUNT //!< Count of Clock Ids.
+  } nvmlClockId_t;
+
+  /**
+   * Clock types.
+   *
+   * All speeds are in Mhz.
+   */
+  typedef enum nvmlClockType_enum
+  {
+    NVML_CLOCK_GRAPHICS  = 0,        //!< Graphics clock domain
+    NVML_CLOCK_SM        = 1,        //!< SM clock domain
+    NVML_CLOCK_MEM       = 2,        //!< Memory clock domain
+    NVML_CLOCK_VIDEO     = 3,        //!< Video encoder/decoder clock domain
+
+    // Keep this last
+    NVML_CLOCK_COUNT //!< Count of clock types
+  } nvmlClockType_t;
+
+  /**
+   * Temperature sensors.
+   */
+  typedef enum nvmlTemperatureSensors_enum
+  {
+    NVML_TEMPERATURE_GPU = 0,    //!< Temperature sensor for the GPU die
+
+    // Keep this last
+    NVML_TEMPERATURE_COUNT
+  } nvmlTemperatureSensors_t;
+
+  /**
+   * Allowed PStates.
+   */
+  typedef enum nvmlPStates_enum
+  {
+    NVML_PSTATE_0 = 0,       //!< Performance state 0 -- Maximum Performance
+    NVML_PSTATE_1 = 1,       //!< Performance state 1
+    NVML_PSTATE_2 = 2,       //!< Performance state 2
+    NVML_PSTATE_3 = 3,       //!< Performance state 3
+    NVML_PSTATE_4 = 4,       //!< Performance state 4
+    NVML_PSTATE_5 = 5,       //!< Performance state 5
+    NVML_PSTATE_6 = 6,       //!< Performance state 6
+    NVML_PSTATE_7 = 7,       //!< Performance state 7
+    NVML_PSTATE_8 = 8,       //!< Performance state 8
+    NVML_PSTATE_9 = 9,       //!< Performance state 9
+    NVML_PSTATE_10 = 10,      //!< Performance state 10
+    NVML_PSTATE_11 = 11,      //!< Performance state 11
+    NVML_PSTATE_12 = 12,      //!< Performance state 12
+    NVML_PSTATE_13 = 13,      //!< Performance state 13
+    NVML_PSTATE_14 = 14,      //!< Performance state 14
+    NVML_PSTATE_15 = 15,      //!< Performance state 15 -- Minimum Performance
+    NVML_PSTATE_UNKNOWN = 32       //!< Unknown performance state
+  } nvmlPstates_t;
+
+  /**
    * PCI information about a GPU device.
    */
   typedef struct nvmlPciInfo_st
@@ -348,6 +416,300 @@ namespace {
         Gets the device's PCIE Max Link speed in MBPS
   */
   typedef nvmlReturn_t (NVML_API *nvmlDeviceGetPciInfo_v3_t)(nvmlDevice_t, nvmlPciInfo_t*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetCurrPcieLinkWidth ( nvmlDevice_t device, unsigned int* currLinkWidth )
+    Parameters
+        device
+            The identifier of the target device
+        currLinkWidth
+            Reference in which to return the current PCIe link generation
+    Returns
+        NVML_SUCCESS if currLinkWidth has been populated
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or currLinkWidth is null
+        NVML_ERROR_NOT_SUPPORTED if PCIe link information is not available
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the current PCIe link width
+
+        For Fermi or newer fully supported devices.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetCurrPcieLinkWidth_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetMaxPcieLinkWidth ( nvmlDevice_t device, unsigned int* maxLinkWidth )
+    Parameters
+        device
+            The identifier of the target device
+        maxLinkWidth
+            Reference in which to return the max PCIe link generation
+    Returns
+        NVML_SUCCESS if maxLinkWidth has been populated
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or maxLinkWidth is null
+        NVML_ERROR_NOT_SUPPORTED if PCIe link information is not available
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the maximum PCIe link width possible with this device and system
+
+        I.E. for a device with a 16x PCIe bus width attached to a 8x PCIe system bus this function will report a max link width of 8.
+
+        For Fermi or newer fully supported devices.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetMaxPcieLinkWidth_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetCurrPcieLinkGeneration ( nvmlDevice_t device, unsigned int* currLinkGen )
+    Parameters
+        device
+            The identifier of the target device
+        currLinkGen
+            Reference in which to return the current PCIe link generation
+    Returns
+        NVML_SUCCESS if currLinkGen has been populated
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or currLinkGen is null
+        NVML_ERROR_NOT_SUPPORTED if PCIe link information is not available
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the current PCIe link generation
+
+        For Fermi or newer fully supported devices.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetCurrPcieLinkGeneration_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetMaxPcieLinkGeneration ( nvmlDevice_t device, unsigned int* maxLinkGen )
+    Parameters
+        device
+            The identifier of the target device
+        maxLinkGen
+            Reference in which to return the max PCIe link generation
+    Returns
+        NVML_SUCCESS if maxLinkGen has been populated
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or maxLinkGen is null
+        NVML_ERROR_NOT_SUPPORTED if PCIe link information is not available
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the maximum PCIe link generation possible with this device and system
+
+        I.E. for a generation 2 PCIe device attached to a generation 1 PCIe bus the max link generation this function will report is generation 1.
+
+        For Fermi or newer fully supported devices.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetMaxPcieLinkGeneration_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetGpuMaxPcieLinkGeneration ( nvmlDevice_t device, unsigned int* maxLinkGenDevice )
+    Parameters
+        device
+            The identifier of the target device
+        maxLinkGenDevice
+            Reference in which to return the max PCIe link generation
+    Returns
+        NVML_SUCCESS if maxLinkGenDevice has been populated
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or maxLinkGenDevice is null
+        NVML_ERROR_NOT_SUPPORTED if PCIe link information is not available
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the maximum PCIe link generation supported by this device
+
+        For Fermi or newer fully supported devices.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetGpuMaxPcieLinkGeneration_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetClock ( nvmlDevice_t device, nvmlClockType_t clockType, nvmlClockId_t clockId, unsigned int* clockMHz )
+    Parameters
+        device
+            The identifier of the target device
+        clockType
+            Identify which clock domain to query
+        clockId
+            Identify which clock in the domain to query
+        clockMHz
+            Reference in which to return the clock in MHz
+    Returns
+        NVML_SUCCESS if clockMHz has been set
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or clockMHz is NULL or clockType is invalid
+        NVML_ERROR_NOT_SUPPORTED if the device does not support this feature
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the clock speed for the clock specified by the clock type and clock ID.
+
+        For Kepler or newer fully supported devices.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetClock_t)(nvmlDevice_t, nvmlClockType_t, nvmlClockId_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetMaxClockInfo ( nvmlDevice_t device, nvmlClockType_t type, unsigned int* clock )
+    Parameters
+        device
+            The identifier of the target device
+        type
+            Identify which clock domain to query
+        clock
+            Reference in which to return the clock speed in MHz
+    Returns
+        NVML_SUCCESS if clock has been set
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or clock is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device cannot report the specified clock
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the maximum clock speeds for the device.
+
+        For Fermi or newer fully supported devices.
+
+        See nvmlClockType_t for details on available clock information.
+
+        Note:
+        Current P0 clocks (reported by nvmlDeviceGetClockInfo) can differ from max clocks by a few MHz.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetMaxClockInfo_t)(nvmlDevice_t, nvmlClockType_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetTemperatureV ( nvmlDevice_t device, nvmlTemperature_t* temperature )
+    Parameters
+        device
+            Target device identifier.
+        temperature
+            Structure specifying the sensor type (input) and retrieved temperature value (output).
+    Returns
+        NVML_SUCCESS if temp has been set
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid, sensorType is invalid or temp is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device does not have the specified sensor
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the current temperature readings (in degrees C) for the given device.
+
+        For all products.
+  */
+  typedef nvmlReturn_t(NVML_API* nvmlDeviceGetTemperatureV_t)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetPerformanceState ( nvmlDevice_t device, nvmlPstates_t* pState )
+    Parameters
+        device
+            The identifier of the target device
+        pState
+            Reference in which to return the performance state reading
+    Returns
+        NVML_SUCCESS if pState has been set
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or pState is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device does not support this feature
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the current performance state for the device.
+
+        For Fermi or newer fully supported devices.
+
+        See nvmlPstates_t for details on allowed performance states.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetPerformanceState_t)(nvmlDevice_t, nvmlPstates_t*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetPowerUsage ( nvmlDevice_t device, unsigned int* power )
+    Parameters
+        device
+            The identifier of the target device
+        power
+            Reference in which to return the power usage information
+    Returns
+        NVML_SUCCESS if power has been populated
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or power is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device does not support power readings
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves power usage for this GPU in milliwatts and its associated circuitry (e.g. memory)
+
+        For Fermi or newer fully supported devices.
+
+        On Fermi and Kepler GPUs the reading is accurate to within +/- 5% of current power draw. On Ampere (except GA100) or newer GPUs,
+        the API returns power averaged over 1 sec interval. On GA100 and older architectures, instantaneous power is returned.
+
+        See NVML_FI_DEV_POWER_AVERAGE and NVML_FI_DEV_POWER_INSTANT to query specific power values.
+
+        It is only available if power management mode is supported. See nvmlDeviceGetPowerManagementMode.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetPowerUsage_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetEnforcedPowerLimit ( nvmlDevice_t device, unsigned int* limit )
+    Parameters
+        device
+            The device to communicate with
+        limit
+            Reference in which to return the power management limit in milliwatts
+    Returns
+        NVML_SUCCESS if limit has been set
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or limit is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device does not support this feature
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Get the effective power limit that the driver enforces after taking into account all limiters
+
+        Note: This can be different from the nvmlDeviceGetPowerManagementLimit if other limits are set elsewhere
+        This includes the out of band power limit interface
+
+        For Kepler or newer fully supported devices.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetEnforcedPowerLimit_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetNumFans ( nvmlDevice_t device, unsigned int* numFans )
+    Parameters
+        device
+            The identifier of the target device
+        numFans
+            The number of fans
+    Returns
+        NVML_SUCCESS if fan number query was successful
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid or numFans is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device does not have a fan
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the number of fans on the device.
+
+        For all discrete products with dedicated fans.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetNumFans_t)(nvmlDevice_t, unsigned int*);
+  /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetFanSpeed_v2 ( nvmlDevice_t device, unsigned int  fan, unsigned int* speed )
+    Parameters
+        device
+            The identifier of the target device
+        fan
+            The index of the target fan, zero indexed.
+        speed
+            Reference in which to return the fan speed percentage
+    Returns
+        NVML_SUCCESS if speed has been set
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid, fan is not an acceptable index, or speed is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device does not have a fan or is newer than Maxwell
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+        Retrieves the intended operating speed of the device's specified fan.
+
+        Note: The reported speed is the intended fan speed. If the fan is physically blocked and unable to spin, the output will not match
+        the actual fan speed.
+
+        For all discrete products with dedicated fans.
+
+        The fan speed is expressed as a percentage of the product's maximum noise tolerance fan speed. This value may exceed 100% in certain cases.
+  */
+  typedef nvmlReturn_t (NVML_API *nvmlDeviceGetFanSpeed_v2_t)(nvmlDevice_t, unsigned int, unsigned int*);
 }
 
 NVMLLibrary::NVMLLibrary(Inaccessible) : DynamicLibrary(nvmlLib) {
@@ -412,4 +774,77 @@ NVMLLibrary::~NVMLLibrary() {
 const ComputeDevice &NVMLLibrary::getDevice(unsigned i) const {
   if (getDeviceCount() <= i) THROW("Invalid NVML device index " << i);
   return devices.at(i);
+}
+
+bool NVMLLibrary::tryGetMeasurements(const char* uuid, GPUMeasurement &measurements) {
+  nvmlReturn_t err;
+  nvmlDevice_t device;
+  unsigned int value = 0;
+  nvmlPstates_t pstate;
+
+  try {
+    DYNAMIC_CALL(nvmlDeviceGetHandleByUUID, (uuid, &device));
+
+    DYNAMIC_CALL(nvmlDeviceGetClock, (device, NVML_CLOCK_GRAPHICS, NVML_CLOCK_ID_CURRENT, &value));
+    measurements.gpuFreq_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxClockInfo, (device, NVML_CLOCK_GRAPHICS, &value));
+    measurements.gpuFreqLimit_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetClock, (device, NVML_CLOCK_MEM, NVML_CLOCK_ID_CURRENT, &value));
+    measurements.memFreq_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxClockInfo, (device, NVML_CLOCK_MEM, &value));
+    measurements.memFreqLimit_MHz = (uint16_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetTemperatureV, (device, NVML_TEMPERATURE_GPU, &value));
+    measurements.gpuTemp_C = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetPerformanceState, (device, &pstate));
+    measurements.pstate = (uint8_t)pstate;
+    DYNAMIC_CALL(nvmlDeviceGetCurrPcieLinkGeneration, (device, &value));
+    measurements.currPCIeLinkGen = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxPcieLinkGeneration, (device, &value));
+    measurements.maxPCIeLinkGen = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetGpuMaxPcieLinkGeneration, (device, &value));
+    measurements.maxPCIeLinkGenDevice = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetCurrPcieLinkWidth, (device, &value));
+    measurements.currPCIeLinkWidth = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetMaxPcieLinkWidth, (device, &value));
+    measurements.maxPCIeLinkWidth = (uint8_t)value;
+    DYNAMIC_CALL(nvmlDeviceGetPowerUsage, (device, &value));
+    measurements.currPower_Watts = (uint16_t)(value / 1000);
+    DYNAMIC_CALL(nvmlDeviceGetEnforcedPowerLimit, (device, &value));
+    measurements.maxPower_Watts = (uint16_t)(value / 1000);
+
+    unsigned int fanCount = 0;
+    DYNAMIC_CALL(nvmlDeviceGetNumFans, (device, &fanCount));
+    measurements.fanCount = (uint8_t)fanCount;
+    if(fanCount > 0)
+    {
+      DYNAMIC_CALL(nvmlDeviceGetFanSpeed_v2, (device, 0, &value))
+      measurements.fan0Speed_pct = ((uint8_t)value);
+
+      if (fanCount > 1)
+      {
+        DYNAMIC_CALL(nvmlDeviceGetFanSpeed_v2, (device, 1, &value));
+        measurements.fan1Speed_pct = ((uint8_t)value);
+      }
+      else measurements.fan1Speed_pct = 0;
+
+      if (fanCount > 2)
+      {
+        DYNAMIC_CALL(nvmlDeviceGetFanSpeed_v2, (device, 2, &value));
+        measurements.fan2Speed_pct = ((uint8_t)value);
+      }
+      else measurements.fan2Speed_pct = 0;
+    }
+    else
+    {
+      measurements.fan0Speed_pct = 0;
+      measurements.fan1Speed_pct = 0;
+      measurements.fan2Speed_pct = 0;
+    }
+    
+    // We got everything 
+    return true;
+  } CATCH_ERROR;
+
+  // Something failed, struct contents are indeterminant
+  return false;
 }
