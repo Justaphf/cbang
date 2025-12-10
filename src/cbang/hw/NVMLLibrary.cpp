@@ -38,6 +38,10 @@ static vector<string> nvmlLib = { "libnvidia-ml.so.1", "libnvidia-ml.so" };
     name##_t name = (name##_t)getSymbol(#name);                    \
     if ((err = (nvmlReturn_t)name args)) THROW(#name "() returned " << (int)err);     \
   }
+#define DYNAMIC_CALL_NO_THROW(name, args) {                        \
+    name##_t name = (name##_t)getSymbol(#name);                    \
+    err = ((nvmlReturn_t)name args);                                \
+  }
 
 /**
  * Buffer size guaranteed to be large enough for pci bus id
@@ -592,6 +596,25 @@ namespace {
   */
   typedef nvmlReturn_t(NVML_API* nvmlDeviceGetTemperatureV_t)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int*);
   /* Updated: 2025-12-09
+    nvmlReturn_t nvmlDeviceGetTemperature ( nvmlDevice_t device, nvmlTemperature_t* temperature )
+    Parameters
+        device
+            Target device identifier.
+        temperature
+            Structure specifying the sensor type (input) and retrieved temperature value (output).
+    Returns
+        NVML_SUCCESS if temp has been set
+        NVML_ERROR_UNINITIALIZED if the library has not been successfully initialized
+        NVML_ERROR_INVALID_ARGUMENT if device is invalid, sensorType is invalid or temp is NULL
+        NVML_ERROR_NOT_SUPPORTED if the device does not have the specified sensor
+        NVML_ERROR_GPU_IS_LOST if the target GPU has fallen off the bus or is otherwise inaccessible
+        NVML_ERROR_UNKNOWN on any unexpected error
+    Description
+       Deprecated
+       Use nvmlDeviceGetTemperatureV instead
+  */
+  typedef nvmlReturn_t(NVML_API* nvmlDeviceGetTemperature_t)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int*);
+  /* Updated: 2025-12-09
     nvmlReturn_t nvmlDeviceGetPerformanceState ( nvmlDevice_t device, nvmlPstates_t* pState )
     Parameters
         device
@@ -793,8 +816,15 @@ bool NVMLLibrary::tryGetMeasurements(const char* uuid, GPUMeasurement &measureme
     measurements.memFreq_MHz = (uint16_t)value;
     DYNAMIC_CALL(nvmlDeviceGetMaxClockInfo, (device, NVML_CLOCK_MEM, &value));
     measurements.memFreqLimit_MHz = (uint16_t)value;
-    DYNAMIC_CALL(nvmlDeviceGetTemperatureV, (device, NVML_TEMPERATURE_GPU, &value));
-    measurements.gpuTemp_C = (uint8_t)value;
+    DYNAMIC_CALL_NO_THROW(nvmlDeviceGetTemperatureV, (device, NVML_TEMPERATURE_GPU, &value));
+    // NOTE: Just recently nvmlDeviceGetTemperature was deprecated for nvmlDeviceGetTemperatureV but if user hasn't
+    //       upgraded the call to nvmlDeviceGetTemperatureV will fail so we need to fall back to nvmlDeviceGetTemperature
+    if (err == NVML_SUCCESS) measurements.gpuTemp_C = (uint8_t)value;
+    else
+    {
+        DYNAMIC_CALL(nvmlDeviceGetTemperature, (device, NVML_TEMPERATURE_GPU, &value));
+        measurements.gpuTemp_C = (uint8_t)value;
+    }
     DYNAMIC_CALL(nvmlDeviceGetPerformanceState, (device, &pstate));
     measurements.pstate = (uint8_t)pstate;
     DYNAMIC_CALL(nvmlDeviceGetCurrPcieLinkGeneration, (device, &value));
