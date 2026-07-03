@@ -472,8 +472,28 @@ void Logger::logBar(const string &msg, uint64_t ts) const {
 
 
 void Logger::write(const char *s, streamsize n) {
+  // The log file sink is binary (StreamBuf uses O_BINARY) and gets the
+  // logCRLF bytes verbatim.  cout/cerr are text-mode on Windows: the CRT
+  // translates '\n' to "\r\n", so the '\r' injected when logCRLF is set
+  // would double the console ending to "\r\r\n".  Strip it for the screen
+  // sink only; the pair always arrives within one write() buffer.
   if (!logFile.isNull()) {logFile->write(s, n); logFileCount++;}
-  if (logToScreen && !screenStream.isNull()) screenStream->write(s, n);
+
+  if (logToScreen && !screenStream.isNull()) {
+#ifdef _WIN32
+    if (logCRLF) {
+      string screen;
+      screen.reserve(n);
+      for (streamsize i = 0; i < n; i++)
+        if (!(s[i] == '\r' && i + 1 < n && s[i + 1] == '\n'))
+          screen.append(1, s[i]);
+      screenStream->write(screen.data(), screen.length());
+    } else screenStream->write(s, n);
+#else
+    screenStream->write(s, n);
+#endif
+  }
+
   for (auto &l: listeners) TRY_CATCH_ERROR(l->write(s, n));
   flush();
 }
