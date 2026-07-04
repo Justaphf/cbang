@@ -1,0 +1,2 @@
+# Byte-pinned line-ending goldens; autocrlf must never rewrite them.
+*.bin binary
