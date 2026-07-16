@@ -30,9 +30,15 @@ def set_enabled(test, enabled):
 
 tests = []
 for test in Glob('*Tests'):
+    name = str(test)
+
+    # harnessTests self-tests recursively invoke testHarness and shell out to
+    # POSIX tools; the first unstartable command aborts the run on Windows
+    if name == 'harnessTests' and env['PLATFORM'] == 'win32':
+        set_enabled(name, False)
+
     script = str(test) + '/SConscript'
     if not os.path.exists(script): continue
-    name = str(test)
 
     # The api module is only built with leveldb, so tests that use it require it
     if name in ('cryptoTests', 'iostreamTests', 'serverTests', 'wsTests',
