@@ -1,0 +1,1 @@
+{"args": ["-r", "[^\\w-]", "", "keep-this!and*that?"]}

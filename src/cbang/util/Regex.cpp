@@ -104,7 +104,10 @@ bool Regex::search(const string &s, Match &m) const {
 
 string Regex::replace(const string &s, const string &r) const {
   string result = s;
-  RE2::Replace(&result, pri->re, r);
+  // Every match, not just the first.  This is what boost::regex_replace did
+  // before RE2 and what callers are written against: patterns like "[_-]" or
+  // "[^\\w-]" are meant to strip all of them.  RE2::Replace does one.
+  RE2::GlobalReplace(&result, pri->re, r);
   return result;
 }
 
