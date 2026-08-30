@@ -94,6 +94,7 @@ namespace cb {
       JSON::ValuePtr authorization;
 
       std::string challengeToken;
+      bool challengeResponded = false;
 
       cb::HTTP::Client::RequestPtr pr;
 
@@ -148,6 +149,8 @@ namespace cb {
       std::string getFinalizePayload() const;
 
       bool challengeRequest(HTTP::Request &req);
+
+      JSON::ValuePtr getHTTP01Challenge() const;
 
     protected:
       std::string getProblemString(const JSON::Value &problem) const;

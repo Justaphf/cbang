@@ -352,8 +352,21 @@ void Account::nextKeyCert() {
 }
 
 
+JSON::ValuePtr Account::getHTTP01Challenge() const {
+  if (authorization.isNull()) return 0;
+
+  auto challenges = authorization->get("challenges", new JSON::List);
+
+  for (auto &challenge: *challenges)
+    if (challenge->getString("type", "") == "http-01") return challenge;
+
+  return 0;
+}
+
+
 void Account::nextAuth() {
   auto &auths = *order->get("authorizations");
+  challengeResponded = false; // Each authorization has its own challenge
   if (++currentAuth < auths.size()) state = STATE_GET_AUTH;
   else state = STATE_FINALIZE;
   next();
@@ -389,18 +402,17 @@ void Account::next() {
   }
 
   case STATE_CHALLENGE: {
-    auto &challenges = *authorization->get("challenges");
+    auto challenge = getHTTP01Challenge();
 
-    for (auto &challenge: challenges) {
-      if (challenge->getString("type", "") == "http-01") {
-        string uri = challenge->getString("url");
-        challengeToken = challenge->getString("token");
-
-        post(uri, "{}");
-        break;
-      }
+    // Without this the state machine would stall with no request in flight
+    if (challenge.isNull()) {
+      LOG_ERROR("ACME authorization offers no http-01 challenge");
+      return nextKeyCert();
     }
 
+    challengeToken     = challenge->getString("token");
+    challengeResponded = true;
+    post(challenge->getString("url"), "{}");
     break;
   }
 
@@ -476,24 +488,36 @@ void Account::responseHandler(HTTP::Request &req) {
         orderLink = req.inGet("Location");
         order = req.getInputJSON();
         currentAuth = 0;
+        challengeResponded = false;
         break;
 
       case STATE_GET_AUTH: {
         authorization = req.getInputJSON();
         string status = authorization->getString("status");
 
-        if (status == "pending") break;
-        if (status == "processing") return retry(req, 5);
         if (status == "valid") return nextAuth();
 
-        // status == invalid or revoked
-        auto &challenges = *authorization->get("challenges");
+        auto challenge = getHTTP01Challenge();
+        string challStatus =
+          challenge.isNull() ? "" : challenge->getString("status", "pending");
 
-        for (auto &challenge: challenges)
-          if (challenge->getString("type", "") == "http-01") {
-            error("Failed to complete certificate challenge", *challenge);
-            break;
-          }
+        // An authorization stays "pending" for as long as its challenge is
+        // being validated.  Per RFC 8555 sec. 7.1.6 "processing" is a
+        // challenge status, never an authorization status, so a "pending"
+        // authorization does not mean the challenge still needs a response.
+        // Responding to the same challenge twice earns a 409 "Authorization
+        // is already being validated", so only respond once and poll after
+        // that.  Whether the server reports the in-flight challenge as
+        // "pending" or "processing" is left to it.
+        if (status == "pending" && challStatus != "invalid") {
+          if (challStatus == "valid") return nextAuth();
+          if (challengeResponded) return retry(req, 5);
+          break; // Respond to the challenge
+        }
+
+        // Authorization or challenge is invalid, revoked, expired, ...
+        if (challenge.isSet())
+          error("Failed to complete certificate challenge", *challenge);
 
         return nextKeyCert();
       }
@@ -503,7 +527,10 @@ void Account::responseHandler(HTTP::Request &req) {
 
         if (status == "valid") nextAuth();
 
-        else if (status == "pending") {
+        // "processing" means the server accepted the response and is
+        // validating it; both it and "pending" are polled via the
+        // authorization.
+        else if (status == "pending" || status == "processing") {
           state = STATE_GET_AUTH;
           retry(req, 5);
 
