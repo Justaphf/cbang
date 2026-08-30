@@ -76,22 +76,24 @@ namespace {
   template <typename T> int compare(const T &a, const T &b) {
     return a < b ? -1 : (b < a ? 1 : 0);
   }
+
+
+  // Addresses used to be validated by a Regex before being parsed here.  A
+  // Regex holds a lazily built DFA cache which is not safe to share between
+  // threads, and these were process wide statics, so parsing an address off
+  // the event thread could abort the process.  inet_pton() already validates,
+  // so the patterns were removed.  Ports are still checked here because
+  // String::parse() is more lenient than the old pattern.
+  bool parsePort(const std::string &s, uint16_t &port) {
+    // Ports are decimal.  String::parse() reads base 0, which would treat a
+    // leading zero as octal.  The old pattern allowed only "0" or a leading
+    // 1-9, so reject a leading zero rather than change what is accepted.
+    if (s.empty() || (1 < s.length() && s[0] == '0')) return false;
+    if (s.find_first_not_of("0123456789") != std::string::npos) return false;
+
+    return String::parse<uint16_t>(s, port, true);
+  }
 }
-
-
-#define U8_RE "((2((5[0-5])|([0-4]\\d)))|(1\\d\\d)|([1-9]?\\d))"
-
-#define U16_RE \
-  "((6((5((5((3[0-5])|([0-2]\\d)))|[0-4]\\d\\d))|[0-4]\\d{3}))|" \
-  "([0-5]\\d{4})|([1-9]\\d{0,3})|0)"
-
-#define PORT_RE "(:" U16_RE ")"
-#define IPV4_RE U8_RE "\\." U8_RE "\\." U8_RE "\\." U8_RE
-#define IPV6_RE "([\\da-fA-F:\\.]+)(%.+)?" // Imprecise
-
-Regex SockAddr::ipv4RE("((" IPV4_RE ")|(\\d+))" PORT_RE "?");
-Regex SockAddr::ipv6RE("(" IPV6_RE ")|(\\[" IPV6_RE "\\]" PORT_RE "?)");
-Regex SockAddr::unixRE("unix:.{1,108}");
 
 
 SockAddr::SockAddr() : data(new uint8_t[getCapacity()]()) {}
@@ -272,19 +274,26 @@ string SockAddr::toString(bool withPort) const {
 
 
 bool SockAddr::readIPv4(const string &_s) {
-  if (!ipv4RE.match(_s)) return false;
-
   string s = _s;
   uint16_t port = 0;
-  if (s.find_last_of(':') != string::npos) {
-    size_t end = s.find_last_of(':');
-    port = String::parseU16(s.substr(end + 1));
-    s    = s.substr(0, end);
+
+  // Parse port.  read() tries the address formats in turn, so anything not
+  // an IPv4 address must return false here and not throw.  An IPv6 address
+  // reaches this point and its last ':' must not be mistaken for a port.
+  size_t end = s.find_last_of(':');
+  if (end != string::npos) {
+    if (!parsePort(s.substr(end + 1), port)) return false;
+    s = s.substr(0, end);
   }
+
+  if (s.empty()) return false;
 
   // Special case
   if (s.find_first_not_of("1234567890") == string::npos) {
-    setIPv4(String::parseU32(s));
+    uint32_t ip = 0;
+    if (!String::parse<uint32_t>(s, ip, true)) return false;
+
+    setIPv4(ip);
     setPort(port);
     return true;
   }
@@ -300,14 +309,18 @@ bool SockAddr::readIPv4(const string &_s) {
 
 
 bool SockAddr::readIPv6(const string &_s) {
-  if (!ipv6RE.match(_s)) return false;
-
   // Parse port
   string s = _s;
-  unsigned port = 0;
-  if (s[0] == '[') {
+  uint16_t port = 0;
+  if (!s.empty() && s[0] == '[') {
     size_t end = s.find_last_of(']');
-    if (end + 1 < s.length()) port = String::parseU16(s.substr(end + 2));
+    if (end == string::npos) return false;
+
+    if (end + 1 < s.length()) {
+      if (s[end + 1] != ':') return false;
+      if (!parsePort(s.substr(end + 2), port)) return false;
+    }
+
     s = s.substr(1, end - 1);
   }
 
@@ -328,8 +341,15 @@ bool SockAddr::readIPv6(const string &_s) {
 
 
 bool SockAddr::readUnix(const string &s) {
-  if (!unixRE.match(s)) return false;
-  setPath(s.c_str() + 5);
+  if (s.compare(0, 5, "unix:")) return false;
+
+  // Bounded here rather than letting setPath() throw, so read() can go on to
+  // try the other address formats
+  string path = s.substr(5);
+  if (path.empty() || sizeof(getUn()->sun_path) - 1 < path.length())
+    return false;
+
+  setPath(path);
   return true;
 }
 

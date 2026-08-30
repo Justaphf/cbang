@@ -1,0 +1,5 @@
+{
+  "args": [
+    "unix:/tmp/foo.sock"
+  ]
+}

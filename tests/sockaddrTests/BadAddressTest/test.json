@@ -1,0 +1,6 @@
+{
+  "args": [
+    "not-an-address"
+  ],
+  "checks": [["file", "return"]]
+}

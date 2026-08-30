@@ -34,8 +34,6 @@
 
 #include "SocketType.h"
 
-#include <cbang/util/Regex.h>
-
 #include <cstdint>
 #include <iostream>
 
@@ -48,10 +46,6 @@ struct sockaddr_un;
 namespace cb {
   class SockAddr {
     uint8_t *data;
-
-    static Regex ipv4RE;
-    static Regex ipv6RE;
-    static Regex unixRE;
 
   public:
     SockAddr();

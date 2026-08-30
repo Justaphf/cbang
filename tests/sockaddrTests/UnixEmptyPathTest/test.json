@@ -1,0 +1,6 @@
+{
+  "args": [
+    "unix:"
+  ],
+  "checks": [["file", "return"]]
+}
