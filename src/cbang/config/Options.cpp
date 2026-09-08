@@ -293,11 +293,13 @@ void Options::endElement(const string &name) {
   xmlValue = String::trim(xmlValue);
 
   if (xmlValue.empty()) {
-    // If value not set and type is boolean, set true
-    if (!xmlValueSet && has(name)) {
-      auto option = get(name);
-      if (option->isBoolean())
-        set(*option, JSON::Factory().createBoolean(true));
+    // If value not set and type is boolean, set true.  Localize first, as
+    // set(name, ...) does.  get() returns the parent's Option in an
+    // OptionProxy, so writing to it would escape the proxy and change the
+    // option for every other user of the parent.
+    if (!xmlValueSet && has(name) && get(name)->isBoolean()) {
+      auto option = tryLocalize(name);
+      if (option.isSet()) set(*option, JSON::Factory().createBoolean(true));
     }
 
   } else set(name, xmlValue, setDefault);

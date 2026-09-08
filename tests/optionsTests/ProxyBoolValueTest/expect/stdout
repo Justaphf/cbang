@@ -1,0 +1,3 @@
+flag: local=yes proxy=true parent=false parent-set=no
+other: local=no proxy=false parent=false parent-set=no
+name: local=no proxy= parent= parent-set=no
