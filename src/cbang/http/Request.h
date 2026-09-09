@@ -79,6 +79,11 @@ namespace cb {
       bool chunked  = false;
       bool replying = false;
 
+      // Verify the peer's certificate against the name or address dialed.
+      // Cleared for a peer which is authenticated some other way and can only
+      // be reached by address, so no certificate could ever match it.
+      bool verifyPeerName = true;
+
       uint64_t bytesRead    = 0;
       uint64_t bytesWritten = 0;
 
@@ -150,6 +155,9 @@ namespace cb {
       bool isIncoming() const;
       bool isChunked() const {return chunked;}
       bool isReplying() const {return replying;}
+
+      bool getVerifyPeerName() const {return verifyPeerName;}
+      void setVerifyPeerName(bool x) {verifyPeerName = x;}
 
       uint64_t getBytesRead() const {return bytesRead;}
       uint64_t getBytesWritten() const {return bytesWritten;}

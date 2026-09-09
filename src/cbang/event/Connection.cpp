@@ -112,13 +112,16 @@ void Connection::accept(const SockAddr &peerAddr,
 }
 
 
-void Connection::openSSL(SSLContext &sslCtx, const string &hostname) {
+void Connection::openSSL(SSLContext &sslCtx, const string &hostname,
+                         bool verifyName) {
 #ifdef HAVE_OPENSSL
   auto ssl = sslCtx.createSSL();
   if (getFD() != -1) ssl->setFD(getFD());
   ssl->setConnectState();
   ssl->setTLSExtHostname(hostname);
-  ssl->setVerifyHostname(hostname);
+  // Without this the peer's certificate chain is still verified but it is not
+  // checked against the name or address dialed
+  if (verifyName) ssl->setVerifyHostname(hostname);
   setSSL(ssl);
 #endif // HAVE_OPENSSL
 }

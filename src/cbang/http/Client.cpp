@@ -82,7 +82,8 @@ SmartPointer<Conn> Client::send(const SmartPointer<Request> &req) const {
   // A Unix domain socket URI ("<scheme>+unix://...") is connected to directly,
   // bypassing proxies.  The "unix:PATH" address resolves without a DNS lookup.
   if (uri.isUnix()) {
-    if (sslCtx.isSet()) conn->openSSL(*sslCtx, uri.getHost());
+    if (sslCtx.isSet())
+      conn->openSSL(*sslCtx, uri.getHost(), req->getVerifyPeerName());
     conn->queueRequest(req);
     conn->connect("unix:" + uri.getUnixPath(), 0, bindAddr);
     return conn;
@@ -99,7 +100,8 @@ SmartPointer<Conn> Client::send(const SmartPointer<Request> &req) const {
     if (!proxy.getScheme().empty())
       THROW("Proxy scheme '" << proxy.getScheme() << "' not supported");
 
-    if (sslCtx.isSet()) conn->openSSL(*sslCtx, uri.getHost());
+    if (sslCtx.isSet())
+      conn->openSSL(*sslCtx, uri.getHost(), req->getVerifyPeerName());
   }
 
   // Queue request

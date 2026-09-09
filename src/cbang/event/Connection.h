@@ -88,7 +88,8 @@ namespace cb {
       bool isConnected() const;
       void accept(const SockAddr &peer, const SmartPointer<Socket> &socket,
                   const SmartPointer<SSLContext> &sslCtx);
-      void openSSL(SSLContext &sslCtx, const std::string &hostname);
+      void openSSL(SSLContext &sslCtx, const std::string &hostname,
+                   bool verifyName = true);
       void connect(const std::string &hostname, uint32_t port,
                    const SockAddr &bind = SockAddr());
 
