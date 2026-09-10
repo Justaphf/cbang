@@ -185,6 +185,14 @@ void cb::SSL::setTLSExtHostname(const string &hostname) {
 }
 
 
+// Verify the peer's certificate chain.  The context defaults to
+// SSL_VERIFY_NONE, so without this or setVerifyHostname() the peer is not
+// authenticated at all.
+void cb::SSL::setVerifyPeer() {
+  SSL_set_verify(ssl, SSL_VERIFY_PEER, 0); // Keep the context's callback
+}
+
+
 // Verify the peer's certificate chain and that it was issued for ``hostname``.
 // Without this the peer is not authenticated at all.
 void cb::SSL::setVerifyHostname(const string &hostname) {

@@ -119,9 +119,10 @@ void Connection::openSSL(SSLContext &sslCtx, const string &hostname,
   if (getFD() != -1) ssl->setFD(getFD());
   ssl->setConnectState();
   ssl->setTLSExtHostname(hostname);
-  // Without this the peer's certificate chain is still verified but it is not
-  // checked against the name or address dialed
+  // Verify the chain either way.  Without verifyName the certificate is not
+  // also checked against the name or address dialed.
   if (verifyName) ssl->setVerifyHostname(hostname);
+  else ssl->setVerifyPeer();
   setSSL(ssl);
 #endif // HAVE_OPENSSL
 }
