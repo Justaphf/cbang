@@ -79,8 +79,9 @@ Top-level keys:
 | `apis` | Optional category → `{args, queries, endpoints}` grouping; categories become OpenAPI tags. |
 
 URL patterns capture path segments with `{name}`, e.g.
-`/users/{id}/posts/{slug}`; captures become args.  Patterns nest: a key
-starting with `/` inside an endpoint config is a sub-pattern.
+`/users/{id}/posts/{slug}`; a capture becomes an arg only once it is also
+declared in an `args:` block (see below).  Patterns nest: a key starting
+with `/` inside an endpoint config is a sub-pattern.
 
 Method keys (`get`, `put`, `post`, `delete`, ..., `any`, or a combination
 like `get|put`) hold the method's statement.  Validation keys (`args`,
@@ -164,8 +165,13 @@ get:
 ## Variables and typed values
 
 `{ref}` resolves from the resolver namespaces: `{args.*}`, `{session.*}`,
-`{group}`, `{options.*}`, `{request.*}` (`method`, `host`, `path`, `ip`),
-plus the binary roots below.  In SQL every ref is
+`{group}`, `{options.*}`, `{request.*}` (`method`, `host`, `path`, `ip`,
+and `headers.<name>`), `{info.*}` (application, build and system metadata
+as `{info.<category>.<key>}`, e.g. `{info.Build.Version}`), plus the binary
+roots below.  `{args.*}` holds exactly the args declared by the `args:`
+blocks in scope — anything undeclared, including an undeclared URL capture,
+is dropped, and a method with no `args:` anywhere in its chain has no
+`args` root at all.  In SQL every ref is
 bound as a prepared-statement parameter (never spliced into the SQL text);
 elsewhere refs interpolate as strings.  A missing ref is a request-time
 error; a `{~ref}` resolves null (SQL `NULL`) when missing.  A config value
@@ -285,6 +291,13 @@ descriptions from `help`.  `hide: true` omits an endpoint.  Serve it with:
   both `ctx` and `next` leaves the request hanging.
 - **Binary refs in string context.**  `'x-{body}'` is an error anywhere;
   `{body}` is only valid bound whole into SQL or as the response body.
+- **Undeclared arg.**  `{args.x}` where `x` is a URL capture but has no
+  `args:` entry is a request-time error, not a silent empty value.  The
+  OpenAPI spec still lists such captures as path parameters, so it is not a
+  check on this.
+- **Optional arg without `~`.**  An `optional: true` arg is absent when not
+  supplied, so it must be referenced `{~args.x}`.  An arg with a `default:`
+  is always present and uses `{args.x}`.
 
 ## See also
 
