@@ -48,7 +48,6 @@
 typedef int socklen_t;
 #define SOCKET_INPROGRESS WSAEWOULDBLOCK
 #define IS_BLOCK_ERROR(e) ((e) == WSAEWOULDBLOCK)
-#define AF_UNIX -1
 
 struct sockaddr_un {
   uint16_t sun_family;
