@@ -40,7 +40,7 @@
 namespace cb {
   class GPUIndex;
 
-  /// Finds the GPUs on this system with OpenCL, CUDA, HIP and the PCI bus.
+  /// Finds the GPUs on this system with OpenCL, CUDA, HIP, NVML and PCI.
   class GPUInfo {
     typedef std::vector<GPUDevice> gpus_t;
     gpus_t gpus;
