@@ -100,9 +100,14 @@ DynamicLibrary::DynamicLibrary(const vector<string> &paths) {
 DynamicLibrary::~DynamicLibrary() {}
 
 
-void *DynamicLibrary::getSymbol(const string &name) {
+void *DynamicLibrary::findSymbol(const string &name) {
   impl_t::clear();
-  auto symbol = impl->get(name);
+  return impl->get(name);
+}
+
+
+void *DynamicLibrary::getSymbol(const string &name) {
+  auto symbol = findSymbol(name);
 
   if (!symbol)
     THROW("Failed to load dynamic symbol '" << name << "' from library '"
