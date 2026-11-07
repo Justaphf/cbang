@@ -52,6 +52,8 @@ namespace cb {
     ~DynamicLibrary();
 
     const std::string &getPath() const {return path;}
+    /// @return The symbol or 0 if not found.
+    void *findSymbol(const std::string &name);
     void *getSymbol(const std::string &name);
 
     template <typename T>
