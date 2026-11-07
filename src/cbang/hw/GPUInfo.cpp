@@ -36,6 +36,7 @@
 #include "OpenCLLibrary.h"
 #include "CUDALibrary.h"
 #include "HIPLibrary.h"
+#include "NVMLLibrary.h"
 
 #include <cbang/Exception.h>
 #include <cbang/log/Logger.h>
@@ -83,6 +84,7 @@ GPUInfo::GPUInfo(const GPUIndex &index) {
   add<OpenCLLibrary>(found, &GPUDevice::setOpenCL);
 #ifndef __APPLE__
   add<CUDALibrary>  (found, &GPUDevice::setCUDA);
+  add<NVMLLibrary>  (found, &GPUDevice::setNVML);
 #endif
   add<HIPLibrary>   (found, &GPUDevice::setHIP);
 

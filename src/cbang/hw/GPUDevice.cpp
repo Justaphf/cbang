@@ -37,7 +37,7 @@ using namespace cb;
 
 
 string GPUDevice::getUUID() const {
-  for (auto *cd: {&opencl, &cuda, &hip})
+  for (auto *cd: {&opencl, &cuda, &hip, &nvml})
     if (!cd->uuid.empty()) return cd->uuid;
 
   return string();

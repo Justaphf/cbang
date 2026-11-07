@@ -47,6 +47,7 @@ namespace cb {
     ComputeDevice cuda;
     ComputeDevice hip;
     ComputeDevice opencl;
+    ComputeDevice nvml; // Telemetry only, not a compute platform
 
   public:
     GPUDevice(const std::string &id = std::string()) : id(id) {}
@@ -60,6 +61,8 @@ namespace cb {
     void setHIP(const ComputeDevice &hip) {this->hip = hip;}
     const ComputeDevice &getOpenCL() const {return opencl;}
     void setOpenCL(const ComputeDevice &opencl) {this->opencl = opencl;}
+    const ComputeDevice &getNVML() const {return nvml;}
+    void setNVML(const ComputeDevice &nvml) {this->nvml = nvml;}
 
     std::string getUUID() const;
     bool hasComputeDevice() const;
