@@ -60,7 +60,7 @@ struct DynamicLibrary::impl_t {
 
   impl_t(const string &path) :
     handle(LoadLibraryEx(path.c_str(), 0, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)) {}
-  ~impl_t() {if (handle) CloseHandle(handle);}
+  ~impl_t() {if (handle) FreeLibrary(handle);}
 
   static void clear() {SysError::clear();}
   string error() {return SysError().toString();}
