@@ -6,11 +6,11 @@ client[16]: tcp closed
 client[17]: upgrade 101 accept=ok
 client[17]: frame op=CLOSE fin=1 mask=0 len=20 hex=03f14d6573736167652073697a652031373e3136
 client[17]:   close status=1009 reason='Message size 17>16'
-client[17]: tcp reset
+client[17]: tcp closed
 client[10+10]: upgrade 101 accept=ok
 client[10+10]: frame op=CLOSE fin=1 mask=0 len=20 hex=03f14d6573736167652073697a652032303e3136
 client[10+10]:   close status=1009 reason='Message size 20>16'
-client[10+10]: tcp reset
+client[10+10]: tcp closed
 --- server log ---
 server: onOpen
 server: onMessage len=16 "abcdefghijklmnop"

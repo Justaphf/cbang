@@ -50,6 +50,7 @@
 typedef int socklen_t;  // Unix socket length
 #define MSG_DONTWAIT 0
 #define MSG_NOSIGNAL 0
+#define SHUT_WR 1
 #define SHUT_RDWR 2
 #define SOCKET_INPROGRESS WSAEWOULDBLOCK
 
@@ -60,6 +61,7 @@ typedef int socklen_t;  // Unix socket length
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <arpa/inet.h>
 
 #define INVALID_SOCKET -1        // WinSock invalid socket
@@ -421,6 +423,25 @@ streamsize Socket::read(
 
 void Socket::close(socket_t socket) {
   LOG_DEBUG(4, "Socket::close(" << socket << ")");
+
+  // Unread input makes close() send RST, which can discard data the peer has
+  // not read yet.  Discard a bounded amount of already queued input first.
+  shutdown(socket, SHUT_WR);
+  char buf[4096];
+  for (int i = 0; i < 16; i++) {
+#ifdef _WIN32
+    u_long avail = 0;
+    if (ioctlsocket((SOCKET)socket, FIONREAD, &avail)) break;
+#else
+    int avail = 0;
+    if (ioctl(socket, FIONREAD, &avail)) break;
+#endif
+    if (avail <= 0) break;
+
+    int ret = recv(socket, buf, avail < 4096 ? (int)avail : 4096, MSG_DONTWAIT);
+    if (ret < 0 && SysError::get() == EINTR) continue;
+    if (ret <= 0) break;
+  }
 
 #ifdef _WIN32
   if (closesocket((SOCKET)socket))
