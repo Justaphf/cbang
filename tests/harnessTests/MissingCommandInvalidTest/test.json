@@ -1,0 +1,4 @@
+{
+  "command": ["sh", "-c", "COLUMNS=80 %(top)s/testHarness --no-color run commandTests"],
+  "checks": [["file", "stdout"], ["file", "return"]]
+}

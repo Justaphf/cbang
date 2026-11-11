@@ -245,6 +245,7 @@ def execute_proc(command, timeout, **kwargs):
       proc.wait()
       raise Exception('Timed out')
 
+  except OSError: raise # Command could not be started
   except Exception as e:
     raise Exception('Running: ' + ' '.join(command) + '\nCaused by:' + str(e))
 
@@ -665,7 +666,7 @@ class CheckFile(Check):
 
 
   def compare(self, file1, file2):
-    if not (os.path.exists(file1) or os.path.exists(file2)): return FAILED
+    if not (os.path.exists(file1) and os.path.exists(file2)): return FAILED
     return PASSED if filecmp.cmp(file1, file2) else FAILED
 
 
@@ -1326,17 +1327,23 @@ class Test:
 
     if self.status is None:
       self.check.starting(self)
-      self.test(self)
-      self.status = self.check.check(self)
-      if self.status is None: raise Exception('Test result not set')
-      self.reason = self.check.reason
 
-      # In init mode, promote the expected UNINITIALIZED to INITIALIZED
-      # (copying captured output to expect/) before the line is printed,
-      # so the user sees one clean status.
-      if self.init_mode and self.status == UNINITIALIZED:
-        self.check.initialize(self)
-        self.status = INITIALIZED
+      try: self.test(self)
+      except OSError as e:
+        self.status = INVALID
+        self.reason = str(e)
+
+      else:
+        self.status = self.check.check(self)
+        if self.status is None: raise Exception('Test result not set')
+        self.reason = self.check.reason
+
+        # In init mode, promote the expected UNINITIALIZED to INITIALIZED
+        # (copying captured output to expect/) before the line is printed,
+        # so the user sees one clean status.
+        if self.init_mode and self.status == UNINITIALIZED:
+          self.check.initialize(self)
+          self.status = INITIALIZED
 
     self.end_time = time.perf_counter()
 

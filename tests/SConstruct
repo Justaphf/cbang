@@ -32,10 +32,10 @@ tests = []
 for test in Glob('*Tests'):
     name = str(test)
 
-    # harnessTests self-tests recursively invoke testHarness and shell out to
-    # POSIX tools; the first unstartable command aborts the run on Windows
-    if name == 'harnessTests' and env['PLATFORM'] == 'win32':
-        set_enabled(name, False)
+    # harnessTests self-tests execute the testHarness script directly and
+    # shell out to POSIX tools, neither of which works on native Windows
+    if name == 'harnessTests':
+        set_enabled(name, env['PLATFORM'] != 'win32')
 
     script = str(test) + '/SConscript'
     if not os.path.exists(script): continue
