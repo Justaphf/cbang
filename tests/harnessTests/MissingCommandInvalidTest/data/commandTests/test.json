@@ -1,0 +1,4 @@
+{
+  "command": "true",
+  "tests": ["MissingTest", "PassTest"]
+}
