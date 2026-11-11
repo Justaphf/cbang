@@ -1,0 +1,7 @@
+# Expected output is compared byte for byte, so check out text files with
+# the platform's native line endings
+* text=auto
+
+# Request bodies that must keep their CRLF line endings
+multipartTests/*/data/body -text
+apiTests/Upload*/data/stdin -text
