@@ -47,6 +47,7 @@
 #include <iostream>
 #include <set>
 #include <map>
+#include <bitset>
 
 using namespace cb;
 using namespace std;
@@ -92,7 +93,7 @@ namespace {
 
       string raw = URLBase64().decode(id);
       if (raw.length() != 32) bytes = false;
-      for (unsigned char c: raw) ones += __builtin_popcount(c);
+      for (unsigned char c: raw) ones += (unsigned)bitset<8>(c).count();
     }
 
     double frac = (double)ones / (n * 256.0);
