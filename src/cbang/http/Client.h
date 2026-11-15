@@ -57,6 +57,7 @@ namespace cb {
       unsigned writeTimeout = 0;
       SmartPointer<RateCollection> stats;
       bool quiet = false;
+      OutgoingRequest::callback_t filter;
 
     public:
       typedef SmartPointer<PendingRequest> RequestPtr;
@@ -91,6 +92,10 @@ namespace cb {
 
       bool isQuiet() const {return quiet;}
       void setQuiet(bool quiet) {this->quiet = quiet;}
+
+      // Called before the callback of each request made with call()
+      const callback_t &getFilter() const {return filter;}
+      void setFilter(callback_t filter) {this->filter = filter;}
 
       SmartPointer<Conn> send(const SmartPointer<Request> &req) const;
 

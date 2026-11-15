@@ -512,6 +512,8 @@ CHUNK_REPLY = (b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n'
 TRAILER_REPLY = (b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n'
                  b'5\r\nhello\r\n0\r\npeer-secret-03\r\n\r\n')
 HEADER_REPLY = b'HTTP/1.1 200 OK\r\npeer-secret-04\r\n\r\n'
+BODY_REPLY = (b'HTTP/1.1 403 Forbidden\r\nContent-Length: 14\r\n\r\n'
+              b'peer-secret-05')
 
 
 def scenario_cbang_get_throw(): cbang_get(THROW_REPLY, '--throw')
@@ -519,10 +521,14 @@ def scenario_cbang_get_throw_quiet():
   cbang_get(THROW_REPLY, '--throw', '--quiet')
 def scenario_cbang_get_chunk(): cbang_get(CHUNK_REPLY)
 def scenario_cbang_get_chunk_quiet(): cbang_get(CHUNK_REPLY, '--quiet')
+def scenario_cbang_get_chunk_filter(): cbang_get(CHUNK_REPLY, '--filter')
 def scenario_cbang_get_trailer(): cbang_get(TRAILER_REPLY)
 def scenario_cbang_get_trailer_quiet(): cbang_get(TRAILER_REPLY, '--quiet')
 def scenario_cbang_get_header(): cbang_get(HEADER_REPLY)
 def scenario_cbang_get_header_quiet(): cbang_get(HEADER_REPLY, '--quiet')
+def scenario_cbang_get_body(): cbang_get(BODY_REPLY, '--body')
+def scenario_cbang_get_filter():
+  cbang_get(BODY_REPLY, '--body', '--filter')
 
 
 def scenario_cbang_client_wire():

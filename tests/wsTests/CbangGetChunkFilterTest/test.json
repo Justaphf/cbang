@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_chunk_filter"
+  ],
+  "notes": "A client filter also runs before the callback of a failed request."
+}

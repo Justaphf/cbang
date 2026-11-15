@@ -36,10 +36,11 @@
 //
 //   wsEcho server <port> [--max-size N] [--close-on-message] [--connections N]
 //   wsEcho client <port> [--verbosity N] [--quiet] [message]
-//   wsEcho get <port> [--verbosity N] [--quiet] [--throw]
+//   wsEcho get <port> [--verbosity N] [--quiet] [--throw] [--body] [--filter]
 //
 // get mode sends one plain HTTP request; --throw makes its callback throw
-// with the reply body.
+// with the reply body, --body prints it and --filter sets a client filter
+// which replaces "secret" in it.
 
 #include <cbang/Catch.h>
 #include <cbang/Exception.h>
@@ -230,6 +231,14 @@ namespace {
   int get(Event::Base &base, uint16_t port, int argc, char *argv[]) {
     HTTP::Client client(base);
     bool throws = false;
+    bool body   = false;
+
+    auto filter = [] (HTTP::Request &req) {
+      cout << "client: filter " << (int)req.getResponseCode() << endl;
+      string s = String::replace(req.getInput(), "secret", "***");
+      req.getInputBuffer().clear();
+      req.getInputBuffer().add(s);
+    };
 
     for (int i = 0; i < argc; i++) {
       string arg = argv[i];
@@ -239,6 +248,8 @@ namespace {
         Logger::instance().setLogColor(false);
       } else if (arg == "--quiet") client.setQuiet(true);
       else if (arg == "--throw") throws = true;
+      else if (arg == "--body") body = true;
+      else if (arg == "--filter") client.setFilter(filter);
       else THROW("Invalid argument: " << arg);
     }
 
@@ -247,6 +258,7 @@ namespace {
       responded = true;
       cout << "client: response " << req.getConnectionError() << ' '
            << (int)req.getResponseCode() << endl;
+      if (body) cout << "client: body " << req.getInput() << endl;
       base.loopExit();
       if (throws) THROW("Reply: " << req.getInput());
     };

@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_body"
+  ],
+  "notes": "Without a filter the callback gets the server's reply body."
+}

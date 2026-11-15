@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_filter"
+  ],
+  "notes": "A client filter rewrites the reply body before the callback."
+}

@@ -1,0 +1,8 @@
+--- client log ---
+client: filter 403
+client: response OK 403
+client: body peer-***-05
+client: exit 0
+--- client stderr ---
+INFO(2):OUT1:> GET http://127.0.0.1:<port>/
+INFO(2):OUT1:< 403 Forbidden

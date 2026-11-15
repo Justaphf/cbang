@@ -118,6 +118,9 @@ SmartPointer<Conn> Client::send(const SmartPointer<Request> &req) const {
 Client::RequestPtr Client::call(
   const URI &uri, Method method, const char *data, unsigned length,
   callback_t cb) {
+  if (filter && cb)
+    cb = [filter = filter, cb] (Request &req) {filter(req); cb(req);};
+
   auto con = SmartPtr(new ConnOut(base));
   auto req = SmartPtr(new PendingRequest(*this, con, uri, method, cb));
 

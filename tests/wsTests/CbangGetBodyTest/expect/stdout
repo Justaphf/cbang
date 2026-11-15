@@ -1,0 +1,7 @@
+--- client log ---
+client: response OK 403
+client: body peer-secret-05
+client: exit 0
+--- client stderr ---
+INFO(2):OUT1:> GET http://127.0.0.1:<port>/
+INFO(2):OUT1:< 403 Forbidden
