@@ -1,0 +1,7 @@
+--- client log ---
+client: response BAD_RESPONSE 200
+client: exit 0
+--- client stderr ---
+INFO(2):OUT1:> GET http://127.0.0.1:<port>/
+ERROR:CON1:Exception: Invalid header line: peer-secret-03
+WARNING:CON1:Incomplete chunk trailer headers

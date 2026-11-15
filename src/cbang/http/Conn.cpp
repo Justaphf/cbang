@@ -64,7 +64,7 @@ void Conn::readChunks(
         uint32_t size = String::parseU32("0x" + line.substr(0, end));
 
         return readChunk(req, size, cb);
-      } CATCH_ERROR;
+      } CATCH(isQuiet() ? LOG_DEBUG_LEVEL(4) : LOG_ERROR_LEVEL, "");
     }
 
     if (cb) cb(false);
@@ -121,7 +121,7 @@ void Conn::readChunkTrailer(
           if (cb) cb(true);
           return;
         }
-      } CATCH_ERROR;
+      } CATCH(isQuiet() ? LOG_DEBUG_LEVEL(4) : LOG_ERROR_LEVEL, "");
 
       LOG_WARNING("Incomplete chunk trailer headers");
       if (cb) cb(false);

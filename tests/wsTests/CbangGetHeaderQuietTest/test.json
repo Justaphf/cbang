@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_header_quiet"
+  ],
+  "notes": "A quiet client keeps a malformed header line out of the log."
+}

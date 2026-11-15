@@ -1,0 +1,5 @@
+--- client log ---
+client: response BAD_RESPONSE 200
+client: exit 0
+--- client stderr ---
+WARNING:CON1:Incomplete chunk trailer headers

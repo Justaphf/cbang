@@ -1,0 +1,7 @@
+--- client log ---
+client: response OK 200
+client: exit 0
+--- client stderr ---
+INFO(2):OUT1:> GET http://127.0.0.1:<port>/
+INFO(2):OUT1:< 200 OK
+ERROR:Exception: Reply: peer-secret-01

@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_header"
+  ],
+  "notes": "A malformed response header line is logged; no response follows."
+}

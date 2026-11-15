@@ -84,9 +84,14 @@ namespace {
 
         if (cert) X509_NAME_oneline(X509_get_subject_name(cert), buf, 256);
 
-        LOG_WARNING("SSL verify error:" << err << ':'
-                    << X509_verify_cert_error_string(err) << ":depth=" << depth
-                    << buf);
+        auto ssl = (_SSL *)X509_STORE_CTX_get_ex_data(
+          ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+        bool quiet = ssl && cb::SSL(ssl).isQuiet();
+
+        LOG_LEVEL(quiet ? LOG_DEBUG_LEVEL(4) : LOG_WARNING_LEVEL,
+                  "SSL verify error:" << err << ':'
+                  << X509_verify_cert_error_string(err) << ":depth=" << depth
+                  << buf);
       }
 
       return preverify_ok;

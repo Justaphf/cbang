@@ -705,7 +705,9 @@ void Request::redirect(const URI &uri, Status code) {
 void Request::onResponse(Event::ConnectionError error) {
   if (error) LOG_DEBUG(4, "< " << error);
   else {
-    LOG_INFO(2, "< " << (int)responseCode << ' ' << responseCodeLine);
+    bool quiet = hasConnection() && connection->isQuiet();
+    LOG_LEVEL(quiet ? LOG_DEBUG_LEVEL(4) : LOG_INFO_LEVEL(2),
+              "< " << (int)responseCode << ' ' << responseCodeLine);
     LOG_DEBUG(5, getInputHeaders() << '\n');
     LOG_DEBUG(6, inputBuffer.hexdump() << '\n');
   }
@@ -836,7 +838,8 @@ void Request::writeRequest(Event::Buffer &buf) {
   if (mayHaveBody() && !outHas("Content-Length"))
     outSet("Content-Length", String(outputBuffer.getLength()));
 
-  LOG_INFO(2, "> " << method << ' ' << uri);
+  LOG_LEVEL(connection->isQuiet() ? LOG_DEBUG_LEVEL(4) : LOG_INFO_LEVEL(2),
+            "> " << method << ' ' << uri);
   LOG_DEBUG(5, getOutputHeaders() << '\n');
   LOG_DEBUG(6, outputBuffer.hexdump() << '\n');
 }

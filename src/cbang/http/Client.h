@@ -56,6 +56,7 @@ namespace cb {
       unsigned readTimeout  = 0;
       unsigned writeTimeout = 0;
       SmartPointer<RateCollection> stats;
+      bool quiet = false;
 
     public:
       typedef SmartPointer<PendingRequest> RequestPtr;
@@ -87,6 +88,9 @@ namespace cb {
       const SmartPointer<RateCollection> &getStats() const {return stats;}
       void setStats(const SmartPointer<RateCollection> &stats)
       {this->stats = stats;}
+
+      bool isQuiet() const {return quiet;}
+      void setQuiet(bool quiet) {this->quiet = quiet;}
 
       SmartPointer<Conn> send(const SmartPointer<Request> &req) const;
 

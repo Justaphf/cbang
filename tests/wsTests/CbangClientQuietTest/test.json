@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_client_quiet"
+  ],
+  "notes": "A quiet cbang client at verbosity 3 logs no request or response line."
+}

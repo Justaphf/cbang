@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_trailer"
+  ],
+  "notes": "A malformed chunk trailer line fails the request and is logged."
+}

@@ -1,0 +1,4 @@
+--- client log ---
+client: response OK 200
+client: exit 0
+--- client stderr ---

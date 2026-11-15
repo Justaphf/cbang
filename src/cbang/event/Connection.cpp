@@ -123,6 +123,7 @@ void Connection::openSSL(SSLContext &sslCtx, const string &hostname,
   // also checked against the name or address dialed.
   if (verifyName) ssl->setVerifyHostname(hostname);
   else ssl->setVerifyPeer();
+  if (quiet) ssl->setQuiet(true);
   setSSL(ssl);
 #endif // HAVE_OPENSSL
 }
@@ -143,7 +144,8 @@ void Connection::connect(
       DNS::Error error, const vector<SockAddr> &addrs) {
 
       if (error || addrs.empty()) {
-        LOG_WARNING("DNS lookup failed for " << hostname);
+        LOG_LEVEL(quiet ? LOG_DEBUG_LEVEL(4) : LOG_WARNING_LEVEL,
+                  "DNS lookup failed for " << hostname);
         return onConnect(false);
       }
 
@@ -174,7 +176,7 @@ void Connection::connect(
         canWrite(WeakCall(this, writeCB));
         return;
 
-      } CATCH_WARNING;
+      } CATCH(quiet ? LOG_DEBUG_LEVEL(4) : LOG_WARNING_LEVEL, "");
 
       close();
       onConnect(false);

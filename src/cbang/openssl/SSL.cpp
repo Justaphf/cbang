@@ -80,6 +80,14 @@ using namespace cb;
 bool cb::SSL::initialized = false;
 
 
+namespace {
+  int getQuietIndex() {
+    static int index = SSL_get_ex_new_index(0, 0, 0, 0, 0);
+    return index;
+  }
+}
+
+
 cb::SSL::SSL(_SSL *ssl) : ssl(ssl) {
   if (ssl) SSL_up_ref(ssl);
 }
@@ -209,6 +217,14 @@ void cb::SSL::setVerifyHostname(const string &hostname) {
 
   SSL_set_verify(ssl, SSL_VERIFY_PEER, 0); // Keep the context's callback
 }
+
+
+void cb::SSL::setQuiet(bool quiet) {
+  SSL_set_ex_data(ssl, getQuietIndex(), quiet ? ssl : 0);
+}
+
+
+bool cb::SSL::isQuiet() const {return SSL_get_ex_data(ssl, getQuietIndex());}
 
 
 void cb::SSL::setConnectState() {SSL_set_connect_state(ssl);}

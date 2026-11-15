@@ -1,0 +1,6 @@
+--- client log ---
+client: no response
+client: exit 0
+--- client stderr ---
+INFO(2):OUT1:> GET http://127.0.0.1:<port>/
+ERROR:Exception: Invalid header line: peer-secret-04

@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_throw"
+  ],
+  "notes": "A response callback throws the reply body; the client logs it."
+}

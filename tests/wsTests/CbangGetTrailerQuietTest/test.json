@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_trailer_quiet"
+  ],
+  "notes": "A quiet client keeps a malformed trailer line out of the log."
+}

@@ -91,6 +91,8 @@ namespace cb {
     void setTLSExtHostname(const std::string &hostname);
     void setVerifyPeer();
     void setVerifyHostname(const std::string &hostname);
+    void setQuiet(bool quiet);
+    bool isQuiet() const;
 
     void setConnectState();
     void setAcceptState();

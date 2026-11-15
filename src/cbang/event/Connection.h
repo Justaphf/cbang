@@ -63,6 +63,7 @@ namespace cb {
       uint64_t id = ++nextID;
 
       SmartPointer<RateCollection> stats;
+      bool quiet = false;
 
     public:
       Connection(Base &base);
@@ -84,6 +85,9 @@ namespace cb {
       const SmartPointer<RateCollection> &getStats() const {return stats;}
       void setStats(const SmartPointer<RateCollection> &stats)
       {this->stats = stats;}
+
+      bool isQuiet() const {return quiet;}
+      void setQuiet(bool quiet) {this->quiet = quiet;}
 
       bool isConnected() const;
       void accept(const SockAddr &peer, const SmartPointer<Socket> &socket,

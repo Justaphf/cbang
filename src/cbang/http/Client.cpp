@@ -65,6 +65,7 @@ SmartPointer<Conn> Client::send(const SmartPointer<Request> &req) const {
     conn->setStats(new RateCollectionNS(stats, "conn."));
   conn->setReadTimeout(readTimeout);
   conn->setWriteTimeout(writeTimeout);
+  conn->setQuiet(quiet);
 
   // Check if already connected
   if (req->isConnected()) {

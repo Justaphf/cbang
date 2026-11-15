@@ -46,6 +46,8 @@ OutgoingRequest::OutgoingRequest(
 
 void OutgoingRequest::onResponse(Event::ConnectionError error) {
   auto self = SmartPtr(this);
+  bool quiet = hasConnection() && getConnection()->isQuiet();
   Request::onResponse(error);
-  if (cb) TRY_CATCH_ERROR(cb(*this));
+  if (cb)
+    TRY_CATCH(quiet ? LOG_DEBUG_LEVEL(4) : LOG_ERROR_LEVEL, cb(*this), "");
 }

@@ -35,7 +35,11 @@
 // Events are logged to stdout, one per line, without IDs, ports or times.
 //
 //   wsEcho server <port> [--max-size N] [--close-on-message] [--connections N]
-//   wsEcho client <port> [message]
+//   wsEcho client <port> [--verbosity N] [--quiet] [message]
+//   wsEcho get <port> [--verbosity N] [--quiet] [--throw]
+//
+// get mode sends one plain HTTP request; --throw makes its callback throw
+// with the reply body.
 
 #include <cbang/Catch.h>
 #include <cbang/Exception.h>
@@ -194,9 +198,19 @@ namespace {
     auto done = [&] () {shutdown = true; base.loopExit();};
 
     auto ws = SmartPtr(new ClientWS("client", done));
-    ws->message = argc ? argv[0] : "hello";
+    ws->message = "hello";
 
     HTTP::Client client(base);
+
+    for (int i = 0; i < argc; i++) {
+      string arg = argv[i];
+      if (arg == "--verbosity" && i + 1 < argc) {
+        Logger::instance().setVerbosity(String::parseU32(argv[++i]));
+        Logger::instance().setLogTime(false);
+      } else if (arg == "--quiet") client.setQuiet(true);
+      else ws->message = arg;
+    }
+
     auto conn = ws->connect(client, URI("ws", "127.0.0.1", port, "/"));
 
     auto guard = base.newEvent([&] () {base.loopExit();});
@@ -211,6 +225,44 @@ namespace {
 
     return 0;
   }
+
+
+  int get(Event::Base &base, uint16_t port, int argc, char *argv[]) {
+    HTTP::Client client(base);
+    bool throws = false;
+
+    for (int i = 0; i < argc; i++) {
+      string arg = argv[i];
+      if (arg == "--verbosity" && i + 1 < argc) {
+        Logger::instance().setVerbosity(String::parseU32(argv[++i]));
+        Logger::instance().setLogTime(false);
+        Logger::instance().setLogColor(false);
+      } else if (arg == "--quiet") client.setQuiet(true);
+      else if (arg == "--throw") throws = true;
+      else THROW("Invalid argument: " << arg);
+    }
+
+    bool responded = false;
+    auto cb = [&] (HTTP::Request &req) {
+      responded = true;
+      cout << "client: response " << req.getConnectionError() << ' '
+           << (int)req.getResponseCode() << endl;
+      base.loopExit();
+      if (throws) THROW("Reply: " << req.getInput());
+    };
+
+    auto uri = URI("http", "127.0.0.1", port, "/");
+    auto pr = client.call(uri, HTTP::Method::HTTP_GET, cb);
+    pr->send();
+
+    auto guard = base.newEvent([&] () {base.loopExit();});
+    guard->add(5);
+
+    base.dispatch();
+
+    if (!responded) cout << "client: no response" << endl;
+    return 0;
+  }
 }
 
 
@@ -221,7 +273,7 @@ int main(int argc, char *argv[]) {
     Exception::printLocations = false;
 
     if (argc < 3) {
-      cerr << "Usage: " << argv[0] << " server|client <port> [options]"
+      cerr << "Usage: " << argv[0] << " server|client|get <port> [options]"
            << endl;
       return 1;
     }
@@ -233,6 +285,7 @@ int main(int argc, char *argv[]) {
 
     if (mode == "server") return server(base, port, argc - 3, argv + 3);
     if (mode == "client") return client(base, port, argc - 3, argv + 3);
+    if (mode == "get") return get(base, port, argc - 3, argv + 3);
     THROW("Invalid mode: " << mode);
 
   } CATCH_ERROR;

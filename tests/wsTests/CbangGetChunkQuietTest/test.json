@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_chunk_quiet"
+  ],
+  "notes": "A quiet client keeps a bad chunk size line out of the log."
+}

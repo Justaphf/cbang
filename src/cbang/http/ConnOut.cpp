@@ -89,7 +89,8 @@ void ConnOut::fail(Event::ConnectionError err, const string &msg) {
   this->requests.clear();
 
   while (requests.size()) {
-    TRY_CATCH_ERROR(requests.front()->onResponse(err));
+    TRY_CATCH(isQuiet() ? LOG_DEBUG_LEVEL(4) : LOG_ERROR_LEVEL,
+              requests.front()->onResponse(err), "");
     requests.pop_front();
   }
 
@@ -122,8 +123,15 @@ void ConnOut::readHeader(const SmartPointer<Request> &req) {
 
     // Read header block
     auto hdrs = SmartPtr(new Headers);
-    if (!hdrs->parse(input))
-      return fail(CONN_ERR_BAD_RESPONSE, "Incomplete headers");
+    try {
+      if (!hdrs->parse(input))
+        return fail(CONN_ERR_BAD_RESPONSE, "Incomplete headers");
+
+    } catch (const Exception &e) {
+      if (!isQuiet()) throw;
+      LOG_LEVEL(LOG_DEBUG_LEVEL(4), "Exception: " << e);
+      return;
+    }
 
     req->setInputHeaders(hdrs);
     LOG_DEBUG(4, *hdrs);
@@ -213,7 +221,7 @@ void ConnOut::process(const SmartPointer<Request> &req) {
 
     // If not closing send next request
     if (!req->needsClose()) return dispatch();
-  } CATCH_ERROR;
+  } CATCH(isQuiet() ? LOG_DEBUG_LEVEL(4) : LOG_ERROR_LEVEL, "");
 
   close();
 }

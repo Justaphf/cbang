@@ -454,6 +454,77 @@ def scenario_cbang_client():
   srv.finish()
 
 
+def scenario_cbang_client_log(*args):
+  # The client's own log at verbosity 3, with the server's port masked
+  srv = Server()
+  r = subprocess.run([wsEcho, 'client', str(srv.port), '--verbosity', '3'] +
+                     list(args), stdout = subprocess.PIPE,
+                     stderr = subprocess.PIPE, text = True, env = client_env(),
+                     timeout = 40)
+  out('--- client log ---')
+  out(r.stdout, end = '')
+  out('client: exit %d' % r.returncode)
+  out('--- client stderr ---')
+  out(r.stderr.replace(':%d' % srv.port, ':<port>'), end = '')
+  srv.finish()
+
+
+def scenario_cbang_client_quiet(): scenario_cbang_client_log('--quiet')
+
+
+def cbang_get(reply, *args):
+  # cbang's HTTP client at verbosity 3 against a raw server sending reply
+  lsock = socket.socket()
+  lsock.bind(('127.0.0.1', 0))
+  lsock.listen(1)
+  port = lsock.getsockname()[1]
+
+  cmd = [wsEcho, 'get', str(port), '--verbosity', '3'] + list(args)
+  result = {}
+  client = threading.Thread(target = lambda: result.update(r = subprocess.run(
+    cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True,
+    env = client_env(), timeout = 40)))
+  client.start()
+
+  lsock.settimeout(10)
+  sock, _ = lsock.accept()
+  p = Peer(sock, 'server')
+
+  while b'\r\n\r\n' not in p.buf:
+    if not p.fill(5): raise Exception('No request')
+
+  p.send(reply)
+  client.join()
+  p.close()
+
+  r = result['r']
+  out('--- client log ---')
+  out(r.stdout, end = '')
+  out('client: exit %d' % r.returncode)
+  out('--- client stderr ---')
+  out(r.stderr.replace(':%d' % port, ':<port>'), end = '')
+
+
+THROW_REPLY = (b'HTTP/1.1 200 OK\r\nContent-Length: 14\r\n\r\n'
+               b'peer-secret-01')
+CHUNK_REPLY = (b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n'
+               b'fffffffffffpeer-secret-02\r\n')
+TRAILER_REPLY = (b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n'
+                 b'5\r\nhello\r\n0\r\npeer-secret-03\r\n\r\n')
+HEADER_REPLY = b'HTTP/1.1 200 OK\r\npeer-secret-04\r\n\r\n'
+
+
+def scenario_cbang_get_throw(): cbang_get(THROW_REPLY, '--throw')
+def scenario_cbang_get_throw_quiet():
+  cbang_get(THROW_REPLY, '--throw', '--quiet')
+def scenario_cbang_get_chunk(): cbang_get(CHUNK_REPLY)
+def scenario_cbang_get_chunk_quiet(): cbang_get(CHUNK_REPLY, '--quiet')
+def scenario_cbang_get_trailer(): cbang_get(TRAILER_REPLY)
+def scenario_cbang_get_trailer_quiet(): cbang_get(TRAILER_REPLY, '--quiet')
+def scenario_cbang_get_header(): cbang_get(HEADER_REPLY)
+def scenario_cbang_get_header_quiet(): cbang_get(HEADER_REPLY, '--quiet')
+
+
 def scenario_cbang_client_wire():
   # cbang's client against a raw server, to see its frames on the wire
   lsock = socket.socket()

@@ -1,0 +1,15 @@
+--- client log ---
+client: onOpen
+client: onMessage len=5 "hello"
+client: onClose 1000 "done"
+client: onShutdown
+client: exit 0
+--- client stderr ---
+INFO(2):OUT1:> GET ws://127.0.0.1:<port>/
+INFO(2):OUT1:< 101 HTTP_SWITCHING_PROTOCOLS
+--- server log ---
+server: onOpen
+server: onMessage len=5 "hello"
+server: onClose 1000 "done"
+server: onShutdown
+server: exit 0

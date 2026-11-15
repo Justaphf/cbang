@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_get_throw_quiet"
+  ],
+  "notes": "A quiet client logs no text of its callback's exception."
+}

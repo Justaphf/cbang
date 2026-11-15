@@ -1,0 +1,6 @@
+{
+  "args": [
+    "cbang_client_log"
+  ],
+  "notes": "cbang client at verbosity 3 logs its request and response lines."
+}
